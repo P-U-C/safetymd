@@ -1,32 +1,64 @@
 # safety.md
 
-> Check before you pay.
+<p align="center">
+  <strong>Trust infrastructure for the agent payment era.</strong><br/>
+  Check before you pay.
+</p>
 
-A Cloudflare Workers API + MCP server for verifying agent payment addresses. Services publish a `safety.md` file declaring their payment addresses; agents check them before sending funds.
+<p align="center">
+  <a href="https://safetymd.p-u-c.workers.dev/v1/health"><img src="https://img.shields.io/badge/API-live-brightgreen?style=flat-square" alt="API live"/></a>
+  <a href="https://github.com/P-U-C/safetymd/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/P-U-C/safetymd/ci.yml?branch=main&label=CI&style=flat-square" alt="CI"/></a>
+  <a href="https://p-u-c.github.io/safetymd/"><img src="https://img.shields.io/badge/docs-GitHub%20Pages-blue?style=flat-square" alt="Docs"/></a>
+  <img src="https://img.shields.io/badge/chain-Base%20%7C%20Tempo-purple?style=flat-square" alt="Chains"/>
+  <img src="https://img.shields.io/badge/ERC-8004-orange?style=flat-square" alt="ERC-8004"/>
+  <img src="https://img.shields.io/badge/payment-x402%20MPP-yellow?style=flat-square" alt="x402"/>
+  <img src="https://img.shields.io/badge/runtime-Cloudflare%20Workers-F38020?style=flat-square&logo=cloudflare" alt="Cloudflare Workers"/>
+  <a href="https://github.com/P-U-C/safetymd/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="MIT"/></a>
+</p>
+
+---
+
+Agents are starting to pay each other. Autonomously. At scale. But there's no way for an agent to verify that the address it's about to pay is legitimate — no standard, no registry, no machine-readable trust signal.
+
+**safety.md** is the fix. A three-layer trust stack: an open file standard, a live API, and a payment gate that pays for itself.
 
 ---
 
 ## How It Works
 
-1. **Services** publish `/.well-known/safety.md` with their payment addresses in YAML frontmatter
-2. **safety.md** crawls and indexes these files daily
-3. **Agents** call the API or MCP tool to verify an address before payment
-4. **Risk scoring** combines: safety.md registration, ERC-8004 identity, on-chain history, and flags
+```
+Service publishes /.well-known/safety.md
+         ↓
+safety.md crawls + indexes daily
+         ↓
+Agent calls GET /v1/check/:address before sending funds
+         ↓
+API returns risk: low | medium | high | critical
+         ↓
+Agent decides whether to pay
+```
+
+### Trust signals checked
+| Signal | Source |
+|--------|--------|
+| safety.md published | Daily crawler |
+| Domain match | DNS + YAML frontmatter |
+| ERC-8004 registration | Base mainnet on-chain |
+| Flagged address | Community reports |
+| On-chain activity | Blockscout |
 
 ---
 
-## API Endpoints
+## API — Live at `safetymd.p-u-c.workers.dev`
 
-### Check an Address
+### Check an address
+```bash
+curl https://safetymd.p-u-c.workers.dev/v1/check/0xB1e55EdD3176Ce9C9aF28F15b79e0c0eb8Fe51AA?chain=base
 ```
-GET /v1/check/:address?chain=base
-```
-Returns a risk assessment for the address.
 
-**Response:**
 ```json
 {
-  "address": "0x...",
+  "address": "0xB1e55EdD3176Ce9C9aF28F15b79e0c0eb8Fe51AA",
   "chain": "base",
   "safe": true,
   "risk": "low",
@@ -37,59 +69,64 @@ Returns a risk assessment for the address.
     "verified": true,
     "erc8004_agent_id": 28362
   },
-  "signals": { ... },
-  "checked_at": "2024-01-01T00:00:00.000Z"
+  "signals": { "safety_md_published": true, "erc8004_registered": true, ... },
+  "checked_at": "2026-03-22T11:00:00.000Z"
 }
 ```
 
-### Batch Check (up to 20)
+### Batch check (up to 20 addresses)
+```bash
+curl -X POST https://safetymd.p-u-c.workers.dev/v1/check/batch \
+  -H 'Content-Type: application/json' \
+  -d '{"addresses":[{"address":"0x...","chain":"base"}]}'
 ```
-POST /v1/check/batch
-Content-Type: application/json
 
+### Other endpoints
+| Endpoint | Description |
+|----------|-------------|
+| `GET /v1/health` | Health check |
+| `GET /v1/directory` | All registered services |
+| `GET /v1/services/:domain` | Service info |
+| `POST /v1/services/register` | Register your service |
+| `GET/POST /mcp` | MCP server (SSE + JSON-RPC) |
+
+---
+
+## Payment Gate (x402 / MPP)
+
+The API itself uses the Machine Payment Protocol — the same protocol it helps you trust.
+
+| Tier | Limit | Cost |
+|------|-------|------|
+| Free | 10 checks / day / IP | $0 |
+| Paid | Unlimited | 0.01 USDC / check |
+
+**Supported settlement chains:** Base (8453) · Tempo (4217)
+
+When the free tier is exhausted, the API returns HTTP 402 with a full MPP `payment-request` payload:
+
+```json
 {
-  "addresses": [
-    { "address": "0x...", "chain": "base" },
-    { "address": "0x...", "chain": "ethereum" }
+  "version": "1.0",
+  "error": "Payment required",
+  "accepts": [
+    { "scheme": "exact", "network": "base", "chainId": 8453, "maxAmountRequired": "10000", "payTo": "0xB1e55EdD3176Ce9C9aF28F15b79e0c0eb8Fe51AA", "asset": "USDC" },
+    { "scheme": "exact", "network": "tempo", "chainId": 4217, "maxAmountRequired": "10000", "payTo": "0xB1e55EdD3176Ce9C9aF28F15b79e0c0eb8Fe51AA", "asset": "USDC" }
   ]
 }
 ```
 
-### Service Directory
-```
-GET /v1/directory?chain=base&protocol=erc20
-GET /v1/directory?chain=base
-GET /v1/directory
-```
-
-### Service Info
-```
-GET /v1/services/:domain
-```
-
-### Register a Service
-```
-POST /v1/services/register
-Content-Type: application/json
-
-{
-  "domain": "myservice.com",
-  "name": "My Service",
-  "safety_md_url": "https://myservice.com/.well-known/safety.md"
-}
-```
-
-### MCP Endpoint
-```
-GET  /mcp   — SSE stream for MCP clients
-POST /mcp   — JSON-RPC 2.0 handler
+Retry with the receipt:
+```bash
+curl https://safetymd.p-u-c.workers.dev/v1/check/0x... \
+  -H "x-payment: <base64-encoded-mpp-receipt>"
 ```
 
 ---
 
-## Publishing a safety.md
+## Publishing a `safety.md`
 
-Create a file at `https://yourdomain.com/.well-known/safety.md`:
+Create `https://yourdomain.com/.well-known/safety.md`:
 
 ```markdown
 ---
@@ -98,7 +135,7 @@ name: "Your Service"
 contact: "payments@yourservice.com"
 
 addresses:
-  - address: "0xYourAddressHere"
+  - address: "0xYourAddress"
     chain: "base"
     protocols: ["erc20"]
     label: "Main payment address"
@@ -111,42 +148,37 @@ trust:
   domain: "yourservice.com"
   homepage: "https://yourservice.com"
 ---
-
-# Payment Information
-
-Official payment addresses for Your Service.
-Only send funds to addresses listed above.
 ```
 
-Then register your service:
+Then register:
 ```bash
-curl -X POST https://safetymd.workers.dev/v1/services/register \
+curl -X POST https://safetymd.p-u-c.workers.dev/v1/services/register \
   -H 'Content-Type: application/json' \
   -d '{"domain":"yourservice.com","name":"Your Service"}'
 ```
 
-Or use the [Generator](https://safetymd.workers.dev/generate) to create your file automatically.
+Or use the [Generator](https://safetymd.p-u-c.workers.dev/generate).
 
 ---
 
-## MCP Configuration
+## MCP — Native Tool for AI Agents
 
-Add to your Claude Desktop, Cursor, or other MCP-compatible client:
+Add to `claude_desktop_config.json`, Cursor, or any MCP client:
 
 ```json
 {
   "mcpServers": {
     "safety-md": {
-      "url": "https://safetymd.workers.dev/mcp",
+      "url": "https://safetymd.p-u-c.workers.dev/mcp",
       "transport": "http"
     }
   }
 }
 ```
 
-**Tool:** `safety_check`
-- `address` (required): Ethereum-style address (0x...)
-- `chain` (optional): `base`, `ethereum`, `arbitrum`, `optimism` (default: base)
+Tool available: **`check_address`**
+- `address` — `0x`-prefixed address (required)
+- `chain` — `base` | `ethereum` | `arbitrum` (default: `base`)
 
 ---
 
@@ -154,78 +186,59 @@ Add to your Claude Desktop, Cursor, or other MCP-compatible client:
 
 | Level | Meaning |
 |-------|---------|
-| `low` | Verified via safety.md + ERC-8004, or long track record |
-| `medium` | Partial trust signals. Proceed with caution. |
-| `high` | New address, no identity, few transactions |
-| `critical` | Address is flagged as malicious. Do not send funds. |
-
----
-
-## Deploy
-
-### Prerequisites
-- Cloudflare account
-- Wrangler CLI: `npm install -g wrangler`
-- `wrangler login`
-
-### Steps
-
-1. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-2. **Create D1 database**
-   ```bash
-   wrangler d1 create safetymd
-   # Copy the database_id to wrangler.toml
-   ```
-
-3. **Create KV namespace**
-   ```bash
-   wrangler kv:namespace create KV
-   wrangler kv:namespace create KV --preview
-   # Copy IDs to wrangler.toml
-   ```
-
-4. **Run migrations**
-   ```bash
-   npm run db:migrate
-   npm run db:seed
-   ```
-
-5. **Deploy**
-   ```bash
-   npm run deploy
-   ```
-
-6. **Type check** (optional)
-   ```bash
-   npm run typecheck
-   ```
-
-### Local Dev
-```bash
-npm run dev
-```
+| 🟢 `low` | Verified via safety.md + ERC-8004, long track record |
+| 🟡 `medium` | Partial signals. Proceed with caution. |
+| 🔴 `high` | New address, no identity, few transactions |
+| 🚨 `critical` | Flagged as malicious. Do not pay. |
 
 ---
 
 ## ERC-8004
 
-[ERC-8004](https://eips.ethereum.org/EIPS/eip-8004) is an on-chain agent identity standard.
+[ERC-8004](https://eips.ethereum.org/EIPS/eip-8004) is the on-chain agent identity standard. safety.md integrates natively:
 
-- **Identity Registry**: `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432` (Base mainnet)
-- **Reputation Registry**: `0xb1E55ED55ac94dB9a725D6263b15B286a82f0f46` (Base mainnet)
+- Registered agents → trust boost in scoring
+- Unregistered → flagged in signals
+- **Identity Registry**: [`0x8004A169FB4a3325136EB29fA0ceB6D2e539a432`](https://basescan.org/address/0x8004A169FB4a3325136EB29fA0ceB6D2e539a432) (Base)
+- **Reputation Registry**: [`0xb1E55ED55ac94dB9a725D6263b15B286a82f0f46`](https://basescan.org/address/0xb1E55ED55ac94dB9a725D6263b15B286a82f0f46) (Base)
 
-Addresses registered as ERC-8004 agents receive a trust boost in risk scoring.
+---
+
+## Deploy Your Own
+
+```bash
+git clone https://github.com/P-U-C/safetymd
+cd safetymd
+npm install
+
+# Create Cloudflare resources
+wrangler d1 create safetymd
+wrangler kv:namespace create KV
+
+# Update wrangler.toml with IDs, then:
+npm run db:migrate
+npm run db:seed
+npm run deploy
+```
+
+**Requirements:** Cloudflare account (free tier works) · Node 20+
+
+---
+
+## Stack
+
+- **Runtime**: Cloudflare Workers
+- **Database**: D1 (SQLite at the edge)
+- **Cache**: Workers KV
+- **Framework**: Hono (TypeScript, strict mode)
+- **Zero external runtime deps** beyond Hono
 
 ---
 
 ## License
 
-MIT
+MIT — [P-U-C](https://github.com/P-U-C)
 
 ---
 
-*Built by [b1e55ed](https://oracle.b1e55ed.permanentupperclass.com)*
+*Built for the [Synthesis Hackathon](https://synthesis.devfolio.co) · Powered by [b1e55ed](https://oracle.b1e55ed.permanentupperclass.com)*
