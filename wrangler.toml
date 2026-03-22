@@ -5,12 +5,12 @@ compatibility_date = "2024-01-01"
 [[d1_databases]]
 binding = "DB"
 database_name = "safetymd"
-database_id = "REPLACE_WITH_ACTUAL_ID"
+database_id = "d254fec3-2420-491d-b141-5ab33949a684"
 
 [[kv_namespaces]]
 binding = "KV"
-id = "REPLACE_WITH_ACTUAL_KV_ID"
-preview_id = "REPLACE_WITH_ACTUAL_PREVIEW_ID"
+id = "60ae788fac2b447582cb37bfca18889d"
+preview_id = "a5fa3cffe2ec47b78ec1ef2c73df8b6d"
 
 [triggers]
 crons = ["0 2 * * *"]
