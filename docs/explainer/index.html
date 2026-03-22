@@ -3,13 +3,14 @@
 <head>
 <meta charset="utf-8">
 <style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
-  background: #0a0a0f;
-  font-family: 'SF Mono', 'Fira Code', monospace;
+  background: #f8fafc;
+  font-family: 'Inter', system-ui, sans-serif;
   width: 1280px; height: 720px;
   overflow: hidden;
-  color: white;
+  color: #0f172a;
 }
 #scene { width: 1280px; height: 720px; position: relative; }
 .slide {
@@ -23,350 +24,444 @@ body {
 }
 .slide.active { opacity: 1; }
 
-/* Grid bg */
-.grid {
-  position: absolute; inset: 0;
-  background-image:
-    linear-gradient(rgba(0,255,128,0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,255,128,0.035) 1px, transparent 1px);
-  background-size: 50px 50px;
-  pointer-events: none;
-}
+/* Backgrounds */
+.bg-white { background: #ffffff; }
+.bg-navy  { background: #0f1e3c; }
+.bg-slate { background: #f1f5f9; }
+.bg-hero  { background: linear-gradient(145deg, #0f1e3c 0%, #1a3a6e 100%); }
 
-/* Glow */
-.glow-tl {
-  position: absolute; top: -200px; left: -100px;
-  width: 700px; height: 700px;
-  background: radial-gradient(circle, rgba(0,255,128,0.07) 0%, transparent 70%);
+/* Decorative circle */
+.circle-deco {
+  position: absolute;
+  border-radius: 50%;
   pointer-events: none;
-}
-.glow-br {
-  position: absolute; bottom: -300px; right: -100px;
-  width: 600px; height: 600px;
-  background: radial-gradient(circle, rgba(100,100,255,0.05) 0%, transparent 70%);
-  pointer-events: none;
-}
-
-/* Scanlines */
-.scan {
-  position: absolute; inset: 0;
-  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.025) 2px, rgba(0,0,0,0.025) 4px);
-  pointer-events: none; z-index: 50;
 }
 
 /* Typography */
-.tag {
-  font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
-  color: rgba(0,255,128,0.6); margin-bottom: 24px; font-weight: 500;
+.eyebrow {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.16em;
+  text-transform: uppercase; margin-bottom: 20px;
 }
-h1 { font-size: 80px; font-weight: 700; text-align: center; line-height: 1; letter-spacing: -0.03em; margin-bottom: 16px; font-family: system-ui, sans-serif; }
-h2 { font-size: 56px; font-weight: 700; text-align: center; line-height: 1.1; letter-spacing: -0.02em; margin-bottom: 20px; font-family: system-ui, sans-serif; }
-h3 { font-size: 38px; font-weight: 700; text-align: center; line-height: 1.2; letter-spacing: -0.01em; margin-bottom: 16px; font-family: system-ui, sans-serif; }
-.sub { font-size: 20px; color: rgba(255,255,255,0.45); text-align: center; line-height: 1.6; font-family: system-ui, sans-serif; }
-.green { color: #00ff80; }
-.red { color: #ff5555; }
-.yellow { color: #ffd080; }
-.blue { color: #80b8ff; }
-.purple { color: #c87aff; }
-.dim { color: rgba(255,255,255,0.25); }
+.eyebrow-blue { color: #3b82f6; }
+.eyebrow-green { color: #10b981; }
+.eyebrow-white { color: rgba(255,255,255,0.5); }
 
-/* Terminal */
-.terminal {
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-radius: 10px;
-  overflow: hidden;
-  width: 100%;
-  max-width: 860px;
-  margin: 24px auto 0;
-}
-.terminal-header {
-  background: rgba(255,255,255,0.04);
-  padding: 12px 18px;
-  display: flex; align-items: center; gap: 8px;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-}
-.tdot { width: 12px; height: 12px; border-radius: 50%; }
-.terminal-title { font-size: 11px; color: rgba(255,255,255,0.25); margin-left: 8px; letter-spacing: 0.05em; }
-.terminal-body {
-  padding: 24px 28px;
-  font-size: 14px;
-  line-height: 1.9;
-}
-.t-prompt { color: rgba(0,255,128,0.5); }
-.t-cmd { color: rgba(255,255,255,0.8); }
-.t-key { color: #80b8ff; }
-.t-str { color: #00ff80; }
-.t-bool-t { color: #00ff80; }
-.t-bool-f { color: #ff5555; }
-.t-num { color: #ffd080; }
-.t-dim { color: rgba(255,255,255,0.25); }
-.t-sep { border-top: 1px solid rgba(255,255,255,0.06); margin: 12px 0; }
-.t-http { color: #ffd080; font-size: 12px; }
-.t-comment { color: rgba(255,255,255,0.2); font-size: 12px; }
+h1 { font-size: 80px; font-weight: 900; line-height: 1; letter-spacing: -0.04em; }
+h2 { font-size: 56px; font-weight: 800; line-height: 1.1; letter-spacing: -0.03em; }
+h3 { font-size: 40px; font-weight: 800; line-height: 1.15; letter-spacing: -0.02em; }
+.sub { font-size: 20px; font-weight: 400; line-height: 1.6; color: #64748b; }
+.sub-white { color: rgba(255,255,255,0.55); }
+.text-white { color: #ffffff; }
+.text-navy { color: #0f1e3c; }
+.accent-blue { color: #3b82f6; }
+.accent-green { color: #10b981; }
+.accent-amber { color: #f59e0b; }
 
-/* Pills */
-.pills { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 28px; }
+/* Shield icon */
+.shield {
+  width: 72px; height: 80px;
+  margin: 0 auto 28px;
+  position: relative;
+}
+.shield svg { width: 100%; height: 100%; }
+
+/* Check badge */
+.check-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: #10b981; color: white;
+  font-size: 14px; font-weight: 700; flex-shrink: 0;
+}
+.x-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: #ef4444; color: white;
+  font-size: 14px; font-weight: 700; flex-shrink: 0;
+}
+
+/* Signal rows */
+.signal-row {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid #f1f5f9;
+  font-size: 15px; font-weight: 500; color: #334155;
+}
+.signal-label { flex: 1; }
+.signal-value { font-weight: 700; font-size: 14px; }
+.signal-green { color: #10b981; }
+.signal-red { color: #ef4444; }
+.signal-gray { color: #94a3b8; }
+
+/* Card */
+.card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 28px 32px;
+  box-shadow: 0 4px 24px rgba(15,30,60,0.06);
+}
+
+/* Pill */
 .pill {
-  padding: 8px 18px; border-radius: 5px;
-  font-size: 12px; letter-spacing: 0.07em; font-weight: 500;
-  border: 1px solid; font-family: monospace;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: 100px;
+  font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
 }
-.pill-g { background: rgba(0,255,128,0.08); border-color: rgba(0,255,128,0.3); color: #00ff80; }
-.pill-b { background: rgba(128,184,255,0.08); border-color: rgba(128,184,255,0.3); color: #80b8ff; }
-.pill-o { background: rgba(255,208,128,0.08); border-color: rgba(255,208,128,0.3); color: #ffd080; }
-.pill-p { background: rgba(200,122,255,0.08); border-color: rgba(200,122,255,0.3); color: #c87aff; }
+.pill-blue { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+.pill-green { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+.pill-amber { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+.pill-slate { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; }
 
-/* Three-col layout */
-.cols { display: flex; gap: 24px; width: 100%; max-width: 1080px; margin-top: 28px; }
+/* Three col */
+.cols { display: flex; gap: 20px; width: 100%; max-width: 1080px; }
 .col {
   flex: 1;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.07);
-  border-radius: 10px;
-  padding: 24px;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 28px;
+  box-shadow: 0 2px 12px rgba(15,30,60,0.05);
 }
-.col-num { font-size: 11px; color: rgba(0,255,128,0.5); letter-spacing: 0.1em; margin-bottom: 8px; font-weight: 600; }
-.col-title { font-size: 17px; font-weight: 700; color: #fff; margin-bottom: 8px; font-family: system-ui, sans-serif; }
-.col-desc { font-size: 13px; color: rgba(255,255,255,0.4); line-height: 1.6; font-family: system-ui, sans-serif; }
+.col-icon { font-size: 28px; margin-bottom: 14px; }
+.col-num { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; }
+.col-title { font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
+.col-desc { font-size: 13px; color: #64748b; line-height: 1.6; }
 
-/* Two-col split */
-.split { display: flex; gap: 40px; width: 100%; max-width: 1080px; align-items: flex-start; margin-top: 16px; }
+/* Split layout */
+.split { display: flex; gap: 48px; width: 100%; max-width: 1080px; align-items: center; }
 .split-left { flex: 1; }
 .split-right { flex: 1; }
 
-/* Status dot */
-.live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #00ff80; box-shadow: 0 0 10px #00ff80; margin-right: 8px; vertical-align: middle; animation: blink 2s ease-in-out infinite; }
-@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+/* Code block */
+.code-block {
+  background: #0f172a;
+  border-radius: 10px;
+  padding: 20px 24px;
+  font-family: 'SF Mono', monospace;
+  font-size: 13px;
+  line-height: 1.8;
+  color: #94a3b8;
+}
+.c-key { color: #7dd3fc; }
+.c-str { color: #86efac; }
+.c-bool { color: #4ade80; }
+.c-red { color: #f87171; }
+.c-yellow { color: #fbbf24; }
+.c-dim { color: rgba(255,255,255,0.2); }
+.c-cmd { color: #e2e8f0; }
+.c-comment { color: #475569; font-style: italic; }
+.c-http-ok { color: #4ade80; font-weight: 700; }
+.c-http-err { color: #fbbf24; font-weight: 700; }
 
-/* Progress bar */
+/* Risk badge */
+.risk-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 20px; border-radius: 10px;
+  font-weight: 700; font-size: 16px;
+}
+.risk-low { background: #f0fdf4; color: #15803d; border: 2px solid #86efac; }
+.risk-critical { background: #fef2f2; color: #dc2626; border: 2px solid #fca5a5; }
+
+/* Progress */
 .progress {
-  position: absolute;
-  bottom: 0; left: 0;
-  height: 2px;
-  background: linear-gradient(90deg, #00ff80, #80b8ff);
-  transition: width 0.1s linear;
+  position: absolute; bottom: 0; left: 0;
+  height: 3px; background: #3b82f6;
+  border-radius: 0 2px 2px 0;
 }
-
-/* Slide counter */
 .counter {
-  position: absolute;
-  bottom: 20px; right: 28px;
-  font-size: 11px; color: rgba(255,255,255,0.15);
-  letter-spacing: 0.08em;
+  position: absolute; bottom: 20px; right: 28px;
+  font-size: 11px; color: #94a3b8; letter-spacing: 0.06em; font-weight: 500;
 }
 
-/* Scene 1 special */
-.big-title { font-size: 96px; font-family: system-ui, sans-serif; font-weight: 800; }
-.filepath-tag { font-size: 14px; color: rgba(0,255,128,0.4); letter-spacing: 0.08em; margin-bottom: 16px; }
+/* Divider */
+.divider { border: none; border-top: 1px solid #e2e8f0; margin: 16px 0; }
+
+/* Stat */
+.stat { text-align: center; }
+.stat-num { font-size: 42px; font-weight: 900; letter-spacing: -0.03em; color: #0f172a; }
+.stat-label { font-size: 13px; color: #94a3b8; font-weight: 500; margin-top: 4px; }
 </style>
 </head>
 <body>
 <div id="scene">
 
-<!-- SLIDE 1: Problem -->
-<div class="slide" id="s1">
-  <div class="grid"></div><div class="glow-tl"></div><div class="glow-br"></div><div class="scan"></div>
-  <div class="tag">The Problem</div>
-  <h1 style="font-family:system-ui,sans-serif;">Agents are paying<br/>each other.</h1>
-  <div class="sub" style="margin-top:20px; max-width:680px;">
-    Autonomously. At scale. Right now.<br/>
-    <span style="color:rgba(255,255,255,0.25)">On Base. On Tempo. No humans in the loop.</span>
+<!-- SLIDE 1: Hero -->
+<div class="slide bg-hero" id="s1">
+  <div class="circle-deco" style="width:600px;height:600px;background:rgba(59,130,246,0.08);top:-200px;right:-150px;"></div>
+  <div class="circle-deco" style="width:400px;height:400px;background:rgba(16,185,129,0.06);bottom:-150px;left:-100px;"></div>
+
+  <div class="shield" style="margin-bottom:32px;">
+    <svg viewBox="0 0 72 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M36 4L8 16V36C8 54.4 20.6 71.2 36 76C51.4 71.2 64 54.4 64 36V16L36 4Z" fill="rgba(59,130,246,0.2)" stroke="#3b82f6" stroke-width="2.5"/>
+      <path d="M24 38L32 46L50 30" stroke="#10b981" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
   </div>
-  <div style="margin-top:48px; font-size:22px; color:rgba(255,85,85,0.8); font-family:system-ui,sans-serif; font-weight:600;">
-    But how does an agent know the address is safe?
+
+  <div class="eyebrow eyebrow-white" style="text-align:center;">Trust infrastructure for the agent payment era</div>
+  <h1 class="text-white" style="text-align:center; margin-bottom:16px;">safety<span style="color:#3b82f6;">.md</span></h1>
+  <div class="sub sub-white" style="text-align:center; max-width:580px;">Check before you pay.</div>
+
+  <div style="display:flex; gap:12px; margin-top:40px; flex-wrap:wrap; justify-content:center;">
+    <span class="pill pill-blue">ERC-8004</span>
+    <span class="pill pill-green">Open Standard</span>
+    <span class="pill" style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);border:1px solid rgba(255,255,255,0.1);">x402 · MPP</span>
+    <span class="pill" style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);border:1px solid rgba(255,255,255,0.1);">MCP Server</span>
   </div>
-  <div style="margin-top:12px; font-size:18px; color:rgba(255,255,255,0.2); font-family:system-ui,sans-serif;">
-    It doesn't. There's no standard. No registry. No signal.
-  </div>
-  <div class="counter">01 / 06</div>
-  <div class="progress" style="width:16%"></div>
+
+  <div class="counter" style="color:rgba(255,255,255,0.2);">01 / 06</div>
+  <div class="progress" style="width:16%;background:linear-gradient(90deg,#3b82f6,#10b981);height:3px;"></div>
 </div>
 
-<!-- SLIDE 2: The Standard -->
-<div class="slide" id="s2">
-  <div class="grid"></div><div class="glow-tl"></div><div class="scan"></div>
-  <div class="tag">The Standard</div>
-  <h2>/.well-known/<span class="green">safety.md</span></h2>
-  <div class="sub" style="margin-bottom:16px;">One file. Any service. Machine-readable. Verifiable.</div>
-  <div class="terminal" style="max-width:780px;">
-    <div class="terminal-header">
-      <div class="tdot" style="background:#ff5f57"></div>
-      <div class="tdot" style="background:#ffbd2e"></div>
-      <div class="tdot" style="background:#28ca41"></div>
-      <div class="terminal-title">oracle.b1e55ed.permanentupperclass.com/.well-known/safety.md</div>
+<!-- SLIDE 2: Problem -->
+<div class="slide bg-white" id="s2">
+  <div class="circle-deco" style="width:500px;height:500px;background:#fef2f2;top:-100px;right:-100px;border-radius:50%;"></div>
+
+  <div class="eyebrow eyebrow-blue" style="text-align:center;">The problem</div>
+  <h2 style="text-align:center; max-width:800px; margin-bottom:20px; color:#0f172a;">
+    Agents are paying each other.<br/>
+    <span style="color:#ef4444;">No one knows if it's safe.</span>
+  </h2>
+  <div class="sub" style="text-align:center; max-width:640px; margin-bottom:44px;">
+    Autonomous agent payments are live on Base and Tempo right now.<br/>
+    There's no standard, no registry, no machine-readable trust signal.
+  </div>
+
+  <div style="display:flex; gap:24px;">
+    <div class="card" style="text-align:center; width:240px;">
+      <div style="font-size:36px; margin-bottom:10px;">🔴</div>
+      <div style="font-size:14px; font-weight:700; color:#ef4444; margin-bottom:6px;">No standard</div>
+      <div style="font-size:13px; color:#94a3b8;">No format for publishing payment addresses</div>
     </div>
-    <div class="terminal-body">
-      <div class="t-dim">---</div>
-      <div><span class="t-key">version</span><span class="t-dim">: </span><span class="t-str">"1.0"</span></div>
-      <div><span class="t-key">name</span><span class="t-dim">: </span><span class="t-str">"b1e55ed"</span></div>
-      <div><span class="t-key">addresses</span><span class="t-dim">:</span></div>
-      <div>&nbsp;&nbsp;<span class="t-dim">- </span><span class="t-key">address</span><span class="t-dim">: </span><span class="t-str">"0xB1e55EdD3176Ce9C9aF28F15b79e0c0eb8Fe51AA"</span></div>
-      <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-key">chain</span><span class="t-dim">: </span><span class="t-str">"base"</span></div>
-      <div><span class="t-key">identity</span><span class="t-dim">:</span></div>
-      <div>&nbsp;&nbsp;<span class="t-key">erc8004_agent_id</span><span class="t-dim">: </span><span class="t-num">28362</span></div>
-      <div><span class="t-dim">---</span></div>
+    <div class="card" style="text-align:center; width:240px;">
+      <div style="font-size:36px; margin-bottom:10px;">🔴</div>
+      <div style="font-size:14px; font-weight:700; color:#ef4444; margin-bottom:6px;">No registry</div>
+      <div style="font-size:13px; color:#94a3b8;">No way to look up if a service is legitimate</div>
+    </div>
+    <div class="card" style="text-align:center; width:240px;">
+      <div style="font-size:36px; margin-bottom:10px;">🔴</div>
+      <div style="font-size:14px; font-weight:700; color:#ef4444; margin-bottom:6px;">No signal</div>
+      <div style="font-size:13px; color:#94a3b8;">Agents send funds blind — no verification layer</div>
     </div>
   </div>
+
   <div class="counter">02 / 06</div>
   <div class="progress" style="width:33%"></div>
 </div>
 
-<!-- SLIDE 3: The API -->
-<div class="slide" id="s3">
-  <div class="grid"></div><div class="glow-tl"></div><div class="scan"></div>
-  <div class="tag">The API · Live at safetymd.p-u-c.workers.dev</div>
-  <h3><span class="live-dot"></span>Check any address in &lt;200ms</h3>
-  <div class="terminal">
-    <div class="terminal-header">
-      <div class="tdot" style="background:#ff5f57"></div>
-      <div class="tdot" style="background:#ffbd2e"></div>
-      <div class="tdot" style="background:#28ca41"></div>
-      <div class="terminal-title">bash</div>
+<!-- SLIDE 3: The Standard -->
+<div class="slide bg-slate" id="s3">
+  <div class="eyebrow eyebrow-green" style="text-align:center;">The solution — layer 1</div>
+  <h3 style="text-align:center; margin-bottom:12px;">An open file standard</h3>
+  <div class="sub" style="text-align:center; max-width:600px; margin-bottom:32px;">
+    Services publish <strong style="color:#0f172a;">/.well-known/safety.md</strong> listing their payment addresses.<br/>Machine-readable. Crawlable. Verifiable.
+  </div>
+
+  <div class="split" style="max-width:960px;">
+    <div class="split-left">
+      <div class="code-block">
+<span class="c-dim">---</span>
+<span class="c-key">version</span>: <span class="c-str">"1.0"</span>
+<span class="c-key">name</span>: <span class="c-str">"b1e55ed"</span>
+<span class="c-key">addresses</span>:
+  - <span class="c-key">address</span>: <span class="c-str">"0xB1e55EdD..."</span>
+    <span class="c-key">chain</span>: <span class="c-str">"base"</span>
+    <span class="c-key">label</span>: <span class="c-str">"Payment address"</span>
+<span class="c-key">identity</span>:
+  <span class="c-key">erc8004_agent_id</span>: <span style="color:#fbbf24;">28362</span>
+<span class="c-key">trust</span>:
+  <span class="c-key">domain</span>: <span class="c-str">"oracle.b1e55ed.com"</span>
+<span class="c-dim">---</span></div>
     </div>
-    <div class="terminal-body">
-      <div><span class="t-prompt">$ </span><span class="t-cmd">curl safetymd.p-u-c.workers.dev/v1/check/<span class="green">0xB1e5...51AA</span>?chain=base</span></div>
-      <div class="t-sep"></div>
-      <div><span class="t-dim">{</span></div>
-      <div>&nbsp;&nbsp;<span class="t-key">"safe"</span><span class="t-dim">: </span><span class="t-bool-t">true</span><span class="t-dim">,</span></div>
-      <div>&nbsp;&nbsp;<span class="t-key">"risk"</span><span class="t-dim">: </span><span class="t-str">"low"</span><span class="t-dim">,</span></div>
-      <div>&nbsp;&nbsp;<span class="t-key">"safety_md_published"</span><span class="t-dim">: </span><span class="t-bool-t">true</span><span class="t-dim">,</span></div>
-      <div>&nbsp;&nbsp;<span class="t-key">"erc8004_registered"</span><span class="t-dim">: </span><span class="t-bool-t">true</span><span class="t-dim">,</span></div>
-      <div>&nbsp;&nbsp;<span class="t-key">"service"</span><span class="t-dim">: </span><span class="t-str">"b1e55ed"</span></div>
-      <div><span class="t-dim">}</span></div>
+    <div class="split-right">
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <div style="display:flex; align-items:flex-start; gap:14px;">
+          <div class="check-badge">✓</div>
+          <div>
+            <div style="font-weight:700; color:#0f172a; font-size:15px; margin-bottom:3px;">Human + machine readable</div>
+            <div style="font-size:13px; color:#64748b;">YAML frontmatter in a Markdown file. Works everywhere.</div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:flex-start; gap:14px;">
+          <div class="check-badge">✓</div>
+          <div>
+            <div style="font-weight:700; color:#0f172a; font-size:15px; margin-bottom:3px;">Zero friction to adopt</div>
+            <div style="font-size:13px; color:#64748b;">Drop one file at a well-known path. Done.</div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:flex-start; gap:14px;">
+          <div class="check-badge">✓</div>
+          <div>
+            <div style="font-weight:700; color:#0f172a; font-size:15px; margin-bottom:3px;">Crawled and indexed daily</div>
+            <div style="font-size:13px; color:#64748b;">safety.md discovers and verifies new services automatically.</div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
-  <div class="pills">
-    <div class="pill pill-g">safety.md ✓</div>
-    <div class="pill pill-b">ERC-8004 ✓</div>
-    <div class="pill pill-o">on-chain history ✓</div>
-    <div class="pill pill-p">flag database ✓</div>
-  </div>
+
   <div class="counter">03 / 06</div>
   <div class="progress" style="width:50%"></div>
 </div>
 
-<!-- SLIDE 4: Payment Gate -->
-<div class="slide" id="s4">
-  <div class="grid"></div><div class="glow-tl"></div><div class="glow-br"></div><div class="scan"></div>
-  <div class="tag">x402 · Machine Payment Protocol</div>
-  <h3>The API that <span class="green">pays for itself</span></h3>
-  <div class="terminal">
-    <div class="terminal-header">
-      <div class="tdot" style="background:#ff5f57"></div>
-      <div class="tdot" style="background:#ffbd2e"></div>
-      <div class="tdot" style="background:#28ca41"></div>
-      <div class="terminal-title">bash</div>
+<!-- SLIDE 4: The API -->
+<div class="slide bg-white" id="s4">
+  <div class="eyebrow eyebrow-blue" style="text-align:center;">The solution — layer 2</div>
+  <h3 style="text-align:center; margin-bottom:8px;">Instant trust verification</h3>
+  <div class="sub" style="text-align:center; max-width:560px; margin-bottom:28px;">Any address. Any chain. Under 200ms.</div>
+
+  <div class="split" style="max-width:1000px; gap:40px;">
+    <div class="split-left" style="flex:1.1;">
+      <div class="code-block">
+<span class="c-comment"># Check before paying</span>
+<span class="c-dim">$ </span><span class="c-cmd">curl /v1/check/0xB1e55EdD...?chain=base</span>
+
+<span class="c-dim">{</span>
+  <span class="c-key">"safe"</span>: <span class="c-bool">true</span>,
+  <span class="c-key">"risk"</span>: <span class="c-str">"low"</span>,
+  <span class="c-key">"service"</span>: <span class="c-str">"b1e55ed"</span>,
+  <span class="c-key">"safety_md_published"</span>: <span class="c-bool">true</span>,
+  <span class="c-key">"erc8004_registered"</span>: <span class="c-bool">true</span>,
+  <span class="c-key">"flagged"</span>: <span class="c-red">false</span>
+<span class="c-dim">}</span></div>
     </div>
-    <div class="terminal-body">
-      <div class="t-comment"># Free tier exhausted (10/day)</div>
-      <div><span class="t-prompt">$ </span><span class="t-cmd">curl safetymd.p-u-c.workers.dev/v1/check/0x...</span></div>
-      <div><span class="t-http">HTTP 402</span> <span class="t-dim">→ payment required</span></div>
-      <div><span class="t-dim">&nbsp;&nbsp;"network": </span><span class="t-str">"base"</span><span class="t-dim">, "chainId": </span><span class="t-num">8453</span><span class="t-dim">, "asset": </span><span class="t-str">"USDC"</span></div>
-      <div><span class="t-dim">&nbsp;&nbsp;"network": </span><span class="t-str">"tempo"</span><span class="t-dim">, "chainId": </span><span class="t-num">4217</span><span class="t-dim">, "asset": </span><span class="t-str">"USDC"</span></div>
-      <div class="t-sep"></div>
-      <div class="t-comment"># Agent pays 0.01 USDC, retries</div>
-      <div><span class="t-prompt">$ </span><span class="t-cmd">curl ... <span class="yellow">-H "x-payment: &lt;receipt&gt;"</span></span></div>
-      <div><span class="t-http" style="color:#00ff80">HTTP 200</span> <span class="t-dim">→ </span><span class="t-bool-t">"safe": true</span></div>
+    <div class="split-right" style="flex:0.9;">
+      <div style="font-size:13px; font-weight:700; color:#94a3b8; letter-spacing:0.06em; text-transform:uppercase; margin-bottom:16px;">Signals checked</div>
+      <div class="signal-row">
+        <div class="check-badge" style="width:20px;height:20px;font-size:10px;">✓</div>
+        <div class="signal-label">safety.md published</div>
+        <div class="signal-value signal-green">✓</div>
+      </div>
+      <div class="signal-row">
+        <div class="check-badge" style="width:20px;height:20px;font-size:10px;">✓</div>
+        <div class="signal-label">Domain match</div>
+        <div class="signal-value signal-green">✓</div>
+      </div>
+      <div class="signal-row">
+        <div class="check-badge" style="width:20px;height:20px;font-size:10px;">✓</div>
+        <div class="signal-label">ERC-8004 identity</div>
+        <div class="signal-value signal-green">Agent #28362</div>
+      </div>
+      <div class="signal-row">
+        <div class="check-badge" style="width:20px;height:20px;font-size:10px;">✓</div>
+        <div class="signal-label">Flag database</div>
+        <div class="signal-value signal-green">Clean</div>
+      </div>
+      <div class="signal-row" style="border:none;">
+        <div class="check-badge" style="width:20px;height:20px;font-size:10px;">✓</div>
+        <div class="signal-label">On-chain activity</div>
+        <div class="signal-value signal-green">Active</div>
+      </div>
     </div>
   </div>
-  <div style="margin-top:20px; font-size:14px; color:rgba(255,255,255,0.3); font-family:system-ui,sans-serif; text-align:center;">
-    An agent verifying a $500 MPP payment — using MPP to do it.
-  </div>
+
   <div class="counter">04 / 06</div>
   <div class="progress" style="width:67%"></div>
 </div>
 
-<!-- SLIDE 5: Three layers -->
-<div class="slide" id="s5">
-  <div class="grid"></div><div class="glow-tl"></div><div class="scan"></div>
-  <div class="tag">Three Layers · One Standard</div>
-  <div class="cols">
-    <div class="col">
-      <div class="col-num">01 · STANDARD</div>
-      <div class="col-title">safety.md file</div>
-      <div class="col-desc">Services publish /.well-known/safety.md. Open spec. Crawled daily. Zero friction to adopt.</div>
+<!-- SLIDE 5: Payment Gate -->
+<div class="slide bg-hero" id="s5">
+  <div class="circle-deco" style="width:500px;height:500px;background:rgba(59,130,246,0.07);top:-150px;right:-100px;"></div>
+
+  <div class="eyebrow eyebrow-white" style="text-align:center;">The solution — layer 3</div>
+  <h3 class="text-white" style="text-align:center; margin-bottom:12px;">The API that pays for itself</h3>
+  <div class="sub sub-white" style="text-align:center; max-width:600px; margin-bottom:32px;">
+    Gated by the same payment protocol it protects.<br/>
+    An agent verifying a $500 MPP payment — pays $0.01 to do it.
+  </div>
+
+  <div style="display:flex; gap:20px; align-items:stretch; max-width:900px; width:100%;">
+    <div class="card" style="flex:1; background:rgba(255,255,255,0.05); border-color:rgba(255,255,255,0.1);">
+      <div style="font-size:11px; font-weight:700; letter-spacing:0.1em; color:rgba(255,255,255,0.35); margin-bottom:14px; text-transform:uppercase;">Free Tier</div>
+      <div style="font-size:36px; font-weight:900; color:white; margin-bottom:4px;">10</div>
+      <div style="font-size:14px; color:rgba(255,255,255,0.4);">checks / day / IP</div>
+      <div style="margin-top:14px; font-size:13px; color:rgba(255,255,255,0.3);">No payment required</div>
     </div>
-    <div class="col">
-      <div class="col-num">02 · API</div>
-      <div class="col-title">Live check endpoint</div>
-      <div class="col-desc">GET /v1/check/:address. ERC-8004 + domain match + flags + Blockscout. &lt;200ms.</div>
+    <div class="card" style="flex:1; background:rgba(59,130,246,0.15); border-color:rgba(59,130,246,0.4);">
+      <div style="font-size:11px; font-weight:700; letter-spacing:0.1em; color:#93c5fd; margin-bottom:14px; text-transform:uppercase;">Paid Tier</div>
+      <div style="font-size:36px; font-weight:900; color:white; margin-bottom:4px;">0.01</div>
+      <div style="font-size:14px; color:rgba(255,255,255,0.5);">USDC per check</div>
+      <div style="margin-top:14px; font-size:13px; color:#93c5fd;">Unlimited · x402 / MPP</div>
     </div>
-    <div class="col">
-      <div class="col-num">03 · PAYMENT</div>
-      <div class="col-title">x402 gate</div>
-      <div class="col-desc">10 free/day. 0.01 USDC after. Base or Tempo. First service gated by MPP that protects MPP.</div>
+    <div class="card" style="flex:1.2; background:rgba(255,255,255,0.05); border-color:rgba(255,255,255,0.1);">
+      <div style="font-size:11px; font-weight:700; letter-spacing:0.1em; color:rgba(255,255,255,0.35); margin-bottom:14px; text-transform:uppercase;">Settlement</div>
+      <div style="display:flex; flex-direction:column; gap:10px; margin-top:4px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="width:8px;height:8px;border-radius:50%;background:#3b82f6;flex-shrink:0;"></div>
+          <div style="color:rgba(255,255,255,0.7); font-size:14px; font-weight:600;">Base <span style="color:rgba(255,255,255,0.3); font-size:12px;">· Chain 8453</span></div>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="width:8px;height:8px;border-radius:50%;background:#10b981;flex-shrink:0;"></div>
+          <div style="color:rgba(255,255,255,0.7); font-size:14px; font-weight:600;">Tempo <span style="color:rgba(255,255,255,0.3); font-size:12px;">· Chain 4217</span></div>
+        </div>
+      </div>
+      <div style="margin-top:16px; font-size:12px; color:rgba(255,255,255,0.25);">Agent picks whichever it supports</div>
     </div>
   </div>
-  <div class="pills" style="margin-top:32px;">
-    <div class="pill pill-b">MCP Server included</div>
-    <div class="pill pill-g">ERC-8004 native</div>
-    <div class="pill pill-o">Base · Tempo</div>
-    <div class="pill pill-p">Open source · MIT</div>
-  </div>
-  <div class="counter">05 / 06</div>
-  <div class="progress" style="width:84%"></div>
+
+  <div class="counter" style="color:rgba(255,255,255,0.2);">05 / 06</div>
+  <div class="progress" style="width:84%;background:linear-gradient(90deg,#3b82f6,#10b981);height:3px;"></div>
 </div>
 
 <!-- SLIDE 6: Close -->
-<div class="slide" id="s6">
-  <div class="grid"></div><div class="glow-tl"></div><div class="glow-br"></div><div class="scan"></div>
-  <div class="filepath-tag">/.well-known/</div>
-  <div class="big-title">safety<span class="green">.md</span></div>
-  <div class="sub" style="margin-top:16px; font-size:22px;">Check before you pay.</div>
-  <div style="margin-top:40px; display:flex; gap:40px; font-size:13px; color:rgba(255,255,255,0.25); font-family:system-ui,sans-serif; text-align:center;">
+<div class="slide bg-white" id="s6">
+  <div class="circle-deco" style="width:600px;height:600px;background:#f0fdf4;top:-200px;left:-200px;"></div>
+  <div class="circle-deco" style="width:400px;height:400px;background:#eff6ff;bottom:-150px;right:-100px;"></div>
+
+  <div class="shield" style="margin-bottom:28px; width:56px; height:64px;">
+    <svg viewBox="0 0 72 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M36 4L8 16V36C8 54.4 20.6 71.2 36 76C51.4 71.2 64 54.4 64 36V16L36 4Z" fill="#eff6ff" stroke="#3b82f6" stroke-width="2.5"/>
+      <path d="M24 38L32 46L50 30" stroke="#10b981" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+
+  <h2 style="margin-bottom:8px; text-align:center;">safety<span class="accent-blue">.md</span></h2>
+  <div class="sub" style="text-align:center; margin-bottom:40px;">Check before you pay.</div>
+
+  <div style="display:flex; gap:16px; flex-wrap:wrap; justify-content:center; margin-bottom:36px;">
+    <span class="pill pill-green">✓ Open Standard</span>
+    <span class="pill pill-blue">✓ ERC-8004 Native</span>
+    <span class="pill pill-amber">✓ x402 · MPP Gate</span>
+    <span class="pill pill-slate">✓ MCP Server</span>
+    <span class="pill pill-slate">✓ Base + Tempo</span>
+    <span class="pill pill-slate">✓ Open Source · MIT</span>
+  </div>
+
+  <div style="display:flex; gap:40px; font-size:13px; color:#94a3b8; text-align:center; border-top:1px solid #f1f5f9; padding-top:28px;">
     <div>
-      <div style="color:rgba(0,255,128,0.6); margin-bottom:4px; letter-spacing:0.06em; font-size:11px; font-family:monospace;">API</div>
+      <div style="font-size:10px; font-weight:700; letter-spacing:0.1em; color:#3b82f6; text-transform:uppercase; margin-bottom:5px;">API</div>
       safetymd.p-u-c.workers.dev
     </div>
-    <div style="color:rgba(255,255,255,0.1); font-size:20px; align-self:center;">·</div>
+    <div style="color:#e2e8f0; font-size:20px; align-self:center;">·</div>
     <div>
-      <div style="color:rgba(0,255,128,0.6); margin-bottom:4px; letter-spacing:0.06em; font-size:11px; font-family:monospace;">DOCS</div>
+      <div style="font-size:10px; font-weight:700; letter-spacing:0.1em; color:#3b82f6; text-transform:uppercase; margin-bottom:5px;">Docs</div>
       p-u-c.github.io/safetymd
     </div>
-    <div style="color:rgba(255,255,255,0.1); font-size:20px; align-self:center;">·</div>
+    <div style="color:#e2e8f0; font-size:20px; align-self:center;">·</div>
     <div>
-      <div style="color:rgba(0,255,128,0.6); margin-bottom:4px; letter-spacing:0.06em; font-size:11px; font-family:monospace;">CODE</div>
+      <div style="font-size:10px; font-weight:700; letter-spacing:0.1em; color:#3b82f6; text-transform:uppercase; margin-bottom:5px;">Code</div>
       github.com/P-U-C/safetymd
     </div>
   </div>
+
   <div class="counter">06 / 06</div>
   <div class="progress" style="width:100%"></div>
 </div>
 
-</div><!-- /scene -->
+</div>
 
 <script>
 const slides = ['s1','s2','s3','s4','s5','s6'];
 let current = 0;
-
 function show(idx) {
-  slides.forEach((id, i) => {
-    const el = document.getElementById(id);
-    el.classList.toggle('active', i === idx);
-  });
+  slides.forEach((id,i) => document.getElementById(id).classList.toggle('active', i===idx));
 }
-
 show(0);
-
 document.addEventListener('keydown', e => {
-  if (e.key === 'ArrowRight' || e.key === ' ') {
-    current = Math.min(current + 1, slides.length - 1);
-    show(current);
-  } else if (e.key === 'ArrowLeft') {
-    current = Math.max(current - 1, 0);
-    show(current);
-  }
+  if (e.key==='ArrowRight'||e.key===' ') { current=Math.min(current+1,slides.length-1); show(current); }
+  else if (e.key==='ArrowLeft') { current=Math.max(current-1,0); show(current); }
 });
-
-// Auto-advance for recording: 8s per slide
 let auto = true;
-if (auto) {
-  setInterval(() => {
-    current = (current + 1) % slides.length;
-    show(current);
-  }, 8000);
-}
+if (auto) setInterval(()=>{ current=(current+1)%slides.length; show(current); }, 8000);
 </script>
 </body>
 </html>
