@@ -25,15 +25,15 @@ const BASE_RPCS = [
 const IDENTITY_REGISTRY = '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432';
 const REPUTATION_REGISTRY = '0xb1E55ED55ac94dB9a725D6263b15B286a82f0f46';
 
-const SEL_OWNER_OF = '6352211e';
-const SEL_BALANCE_OF = '70a08231';
-const SEL_GET_FEEDBACK = '1106a382';
+export const SEL_OWNER_OF = '6352211e';
+export const SEL_BALANCE_OF = '70a08231';
+export const SEL_GET_FEEDBACK = '1106a382';
 
-function padLeft(hex: string, bytes: number): string {
+export function padLeft(hex: string, bytes: number): string {
   return hex.replace(/^0x/, '').padStart(bytes * 2, '0');
 }
 
-function hexToU256(hex: string): bigint {
+export function hexToU256(hex: string): bigint {
   return BigInt('0x' + hex.replace(/^0x/, ''));
 }
 

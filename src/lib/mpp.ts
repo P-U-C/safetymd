@@ -24,6 +24,7 @@ import type { Env } from '../types';
 export const FREE_CHECKS_PER_DAY = 10;
 export const PRICE_USDC = '0.01'; // per check
 export const PRICE_WEI = '10000'; // 0.01 USDC in 6-decimal wei
+export const MPP_PRICE_USDC = 10000; // numeric constant for tests
 
 // Supported chains for payment settlement
 const SUPPORTED_CHAINS = [
