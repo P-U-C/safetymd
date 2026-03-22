@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 1200px;
+    height: 630px;
+    background: #0a0a0f;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* Grid background */
+  .grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,255,128,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,255,128,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+
+  /* Radial glow */
+  .glow {
+    position: absolute;
+    top: -200px;
+    left: -100px;
+    width: 800px;
+    height: 800px;
+    background: radial-gradient(circle, rgba(0,255,128,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .glow2 {
+    position: absolute;
+    bottom: -300px;
+    right: -100px;
+    width: 700px;
+    height: 700px;
+    background: radial-gradient(circle, rgba(100,100,255,0.06) 0%, transparent 70%);
+  }
+
+  /* Main layout */
+  .container {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
+    padding: 60px 80px;
+  }
+
+  /* Top bar */
+  .topbar {
+    position: absolute;
+    top: 32px;
+    left: 80px;
+    right: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: rgba(0,255,128,0.5);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+  }
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #00ff80;
+    box-shadow: 0 0 8px #00ff80;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+  .topbar-right {
+    font-size: 11px;
+    color: rgba(255,255,255,0.2);
+    letter-spacing: 0.05em;
+  }
+
+  /* File path */
+  .filepath {
+    font-size: 13px;
+    color: rgba(0,255,128,0.4);
+    letter-spacing: 0.08em;
+    margin-bottom: 24px;
+  }
+
+  /* Main title */
+  .title {
+    font-size: 88px;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1;
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+  }
+  .title .ext {
+    color: #00ff80;
+    text-shadow: 0 0 40px rgba(0,255,128,0.6);
+  }
+
+  /* Tagline */
+  .tagline {
+    font-size: 22px;
+    color: rgba(255,255,255,0.45);
+    margin-bottom: 44px;
+    letter-spacing: 0.02em;
+    font-weight: 400;
+  }
+
+  /* Feature pills */
+  .pills {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .pill {
+    padding: 7px 16px;
+    border-radius: 4px;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    font-weight: 500;
+    border: 1px solid;
+  }
+  .pill-green {
+    background: rgba(0,255,128,0.08);
+    border-color: rgba(0,255,128,0.3);
+    color: #00ff80;
+  }
+  .pill-blue {
+    background: rgba(100,150,255,0.08);
+    border-color: rgba(100,150,255,0.3);
+    color: #8aafff;
+  }
+  .pill-orange {
+    background: rgba(255,160,50,0.08);
+    border-color: rgba(255,160,50,0.3);
+    color: #ffa032;
+  }
+  .pill-purple {
+    background: rgba(180,100,255,0.08);
+    border-color: rgba(180,100,255,0.3);
+    color: #c87aff;
+  }
+
+  /* Right side — terminal card */
+  .terminal {
+    position: absolute;
+    right: 72px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 420px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .terminal-header {
+    background: rgba(255,255,255,0.04);
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .terminal-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .terminal-title {
+    font-size: 11px;
+    color: rgba(255,255,255,0.3);
+    margin-left: 6px;
+    letter-spacing: 0.05em;
+  }
+  .terminal-body {
+    padding: 20px;
+    font-size: 12.5px;
+    line-height: 1.7;
+  }
+  .t-dim  { color: rgba(255,255,255,0.25); }
+  .t-cmd  { color: rgba(255,255,255,0.7); }
+  .t-green { color: #00ff80; }
+  .t-yellow { color: #ffd080; }
+  .t-blue { color: #80b8ff; }
+  .t-red { color: #ff6b6b; }
+  .t-key { color: rgba(255,255,255,0.4); }
+
+  /* Bottom bar */
+  .bottombar {
+    position: absolute;
+    bottom: 28px;
+    left: 80px;
+    right: 80px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding-top: 20px;
+  }
+  .bottombar-url {
+    font-size: 13px;
+    color: rgba(255,255,255,0.2);
+  }
+  .bottombar-badges {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+  .badge {
+    font-size: 11px;
+    color: rgba(255,255,255,0.25);
+    letter-spacing: 0.05em;
+  }
+  .badge-sep { color: rgba(255,255,255,0.1); }
+
+  /* Scan line effect */
+  .scanline {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.03) 2px,
+      rgba(0,0,0,0.03) 4px
+    );
+    pointer-events: none;
+    z-index: 20;
+  }
+</style>
+</head>
+<body>
+<div class="grid"></div>
+<div class="glow"></div>
+<div class="glow2"></div>
+<div class="scanline"></div>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="dot"></div>
+    <span>API LIVE</span>
+    <span style="color:rgba(255,255,255,0.1)">·</span>
+    <span>CLOUDFLARE WORKERS</span>
+  </div>
+  <div class="topbar-right">github.com/P-U-C/safetymd</div>
+</div>
+
+<div class="container">
+  <div style="max-width: 580px;">
+    <div class="filepath">/.well-known/</div>
+    <div class="title">safety<span class="ext">.md</span></div>
+    <div class="tagline">Check before you pay.</div>
+    <div class="pills">
+      <div class="pill pill-green">ERC-8004 Native</div>
+      <div class="pill pill-blue">x402 / MPP</div>
+      <div class="pill pill-orange">Base · Tempo</div>
+      <div class="pill pill-purple">MCP Server</div>
+      <div class="pill pill-green">Open Standard</div>
+    </div>
+  </div>
+</div>
+
+<!-- Terminal card -->
+<div class="terminal">
+  <div class="terminal-header">
+    <div class="terminal-dot" style="background:#ff5f57"></div>
+    <div class="terminal-dot" style="background:#ffbd2e"></div>
+    <div class="terminal-dot" style="background:#28ca41"></div>
+    <div class="terminal-title">bash</div>
+  </div>
+  <div class="terminal-body">
+    <div><span class="t-dim">$ </span><span class="t-cmd">curl /v1/check/0xB1e5...</span></div>
+    <div style="margin-top:4px; color:rgba(255,255,255,0.15)">──────────────────────</div>
+    <div style="margin-top:4px">
+      <span class="t-key">"safe"</span><span class="t-dim">: </span><span class="t-green">true</span><span class="t-dim">,</span>
+    </div>
+    <div>
+      <span class="t-key">"risk"</span><span class="t-dim">: </span><span class="t-green">"low"</span><span class="t-dim">,</span>
+    </div>
+    <div>
+      <span class="t-key">"erc8004_registered"</span><span class="t-dim">: </span><span class="t-green">true</span><span class="t-dim">,</span>
+    </div>
+    <div>
+      <span class="t-key">"safety_md_published"</span><span class="t-dim">: </span><span class="t-green">true</span>
+    </div>
+    <div style="margin-top:12px; color:rgba(255,255,255,0.15)">──────────────────────</div>
+    <div style="margin-top:8px"><span class="t-dim">$ </span><span class="t-cmd">curl /v1/check/0xdead...</span></div>
+    <div style="margin-top:4px">
+      <span class="t-key">"safe"</span><span class="t-dim">: </span><span class="t-red">false</span><span class="t-dim">,</span>
+    </div>
+    <div>
+      <span class="t-key">"risk"</span><span class="t-dim">: </span><span class="t-red">"critical"</span><span class="t-dim">,</span>
+    </div>
+    <div>
+      <span class="t-key">"flagged"</span><span class="t-dim">: </span><span class="t-red">true</span>
+    </div>
+    <div style="margin-top:12px; color:rgba(255,255,255,0.15)">──────────────────────</div>
+    <div style="margin-top:8px; font-size:11px">
+      <span class="t-yellow">HTTP 402</span><span class="t-dim"> → pay 0.01 USDC → retry</span>
+    </div>
+    <div style="font-size:11px">
+      <span class="t-blue">Base (8453)</span><span class="t-dim"> · </span><span class="t-blue">Tempo (4217)</span>
+    </div>
+  </div>
+</div>
+
+<div class="bottombar">
+  <div class="bottombar-url">safetymd.p-u-c.workers.dev</div>
+  <div class="bottombar-badges">
+    <span class="badge">Cloudflare Workers</span>
+    <span class="badge-sep">·</span>
+    <span class="badge">D1 + KV</span>
+    <span class="badge-sep">·</span>
+    <span class="badge">TypeScript</span>
+    <span class="badge-sep">·</span>
+    <span class="badge">MIT</span>
+  </div>
+</div>
+
+</body>
+</html>
