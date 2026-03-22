@@ -9,8 +9,8 @@ database_id = "REPLACE_WITH_ACTUAL_ID"
 
 [[kv_namespaces]]
 binding = "KV"
-id = "REPLACE_WITH_ACTUAL_ID"
-preview_id = "REPLACE_WITH_ACTUAL_ID"
+id = "REPLACE_WITH_ACTUAL_KV_ID"
+preview_id = "REPLACE_WITH_ACTUAL_PREVIEW_ID"
 
 [triggers]
 crons = ["0 2 * * *"]
