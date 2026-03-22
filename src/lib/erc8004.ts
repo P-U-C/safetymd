@@ -2,19 +2,31 @@
  * ERC-8004 identity & reputation lookups via manual ABI encoding.
  * No ethers.js / web3.js — pure fetch + hex manipulation.
  *
- * Precomputed 4-byte selectors (keccak256 of function signature, first 4 bytes):
- *   agentIdByAddress(address)      → 0x79ce7ac1
- *   getReputationSummary(uint256)  → 0xb9b1f48c
+ * The ERC-8004 Identity Registry is an ERC-721 NFT contract.
+ * There is no agentIdByAddress() function — lookup strategy:
+ *   1. If caller provides a known agentId (from DB seed), verify via ownerOf(agentId)
+ *   2. Otherwise check balanceOf(address) > 0 to confirm ERC-8004 registration
+ *   3. getFeedback(agentId) returns reputation history from Reputation Registry
+ *
+ * Selectors (keccak256 first 4 bytes):
+ *   ownerOf(uint256)     → 0x6352211e
+ *   balanceOf(address)   → 0x70a08231
+ *   getFeedback(uint256) → 0x1106a382
  */
 
 import type { ERC8004Info } from '../types';
 
-const BASE_RPC = 'https://mainnet.base.org';
+const BASE_RPCS = [
+  'https://mainnet.base.org',
+  'https://base-rpc.publicnode.com',
+  'https://1rpc.io/base',
+];
 const IDENTITY_REGISTRY = '0x8004A169FB4a3325136EB29fA0ceB6D2e539a432';
 const REPUTATION_REGISTRY = '0xb1E55ED55ac94dB9a725D6263b15B286a82f0f46';
 
-const SEL_AGENT_ID_BY_ADDRESS = '79ce7ac1';
-const SEL_GET_REPUTATION_SUMMARY = 'b9b1f48c';
+const SEL_OWNER_OF = '6352211e';
+const SEL_BALANCE_OF = '70a08231';
+const SEL_GET_FEEDBACK = '1106a382';
 
 function padLeft(hex: string, bytes: number): string {
   return hex.replace(/^0x/, '').padStart(bytes * 2, '0');
@@ -25,70 +37,106 @@ function hexToU256(hex: string): bigint {
 }
 
 async function ethCall(to: string, data: string): Promise<string | null> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 3000);
-  try {
-    const resp = await fetch(BASE_RPC, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'eth_call',
-        params: [{ to, data }, 'latest'],
-      }),
-      signal: controller.signal,
-    });
-    if (!resp.ok) return null;
-    const json = (await resp.json()) as { result?: string; error?: unknown };
-    if (json.error || !json.result || json.result === '0x') return null;
-    return json.result;
-  } catch {
-    return null;
-  } finally {
-    clearTimeout(timer);
+  for (const rpc of BASE_RPCS) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 3000);
+    try {
+      const resp = await fetch(rpc, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'User-Agent': 'safetymd/0.1' },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 1,
+          method: 'eth_call',
+          params: [{ to, data }, 'latest'],
+        }),
+        signal: controller.signal,
+      });
+      if (!resp.ok) continue;
+      const json = (await resp.json()) as { result?: string; error?: unknown };
+      if (json.error || !json.result || json.result === '0x') continue;
+      return json.result;
+    } catch {
+      // try next RPC
+    } finally {
+      clearTimeout(timer);
+    }
   }
+  return null;
 }
 
-/** Returns agent ID or null if not registered / error. */
-async function getAgentIdByAddress(address: string): Promise<number | null> {
-  const addr = padLeft(address, 32); // 12 zero bytes + 20 byte address
-  const data = '0x' + SEL_AGENT_ID_BY_ADDRESS + addr;
-  const result = await ethCall(IDENTITY_REGISTRY, data);
-  if (!result) return null;
-  const hex = result.replace(/^0x/, '');
-  if (hex.length < 64) return null;
-  const id = hexToU256(hex.slice(0, 64));
-  if (id === 0n) return null;
-  return Number(id);
-}
-
-/** Returns { totalScore, count } or null on error. */
-async function getReputationSummary(
-  agentId: number
-): Promise<{ totalScore: bigint; count: bigint } | null> {
+/**
+ * Verify address owns a specific agentId NFT via ownerOf(tokenId).
+ * Returns true if the address is the owner.
+ */
+async function verifyOwnership(address: string, agentId: number): Promise<boolean> {
   const idHex = padLeft(agentId.toString(16), 32);
-  const data = '0x' + SEL_GET_REPUTATION_SUMMARY + idHex;
+  const data = '0x' + SEL_OWNER_OF + idHex;
+  const result = await ethCall(IDENTITY_REGISTRY, data);
+  if (!result) return false;
+  const owner = '0x' + result.slice(-40);
+  return owner.toLowerCase() === address.toLowerCase();
+}
+
+/**
+ * Check if address holds any ERC-8004 NFTs (balanceOf > 0).
+ * Faster than ownership check when agentId is unknown.
+ */
+async function hasERC8004(address: string): Promise<boolean> {
+  const addrHex = padLeft(address, 32);
+  const data = '0x' + SEL_BALANCE_OF + addrHex;
+  const result = await ethCall(IDENTITY_REGISTRY, data);
+  if (!result) return false;
+  return hexToU256(result) > 0n;
+}
+
+/**
+ * Get feedback count from Reputation Registry for a known agentId.
+ * getFeedback returns an array — we parse the length from the ABI-encoded response.
+ */
+async function getFeedbackCount(agentId: number): Promise<number | null> {
+  const idHex = padLeft(agentId.toString(16), 32);
+  const data = '0x' + SEL_GET_FEEDBACK + idHex;
   const result = await ethCall(REPUTATION_REGISTRY, data);
   if (!result) return null;
   const hex = result.replace(/^0x/, '');
-  if (hex.length < 128) return null;
-  const totalScore = hexToU256(hex.slice(0, 64));
+  // ABI-encoded dynamic array: offset (32 bytes) + length (32 bytes) + items
+  if (hex.length < 128) return 0;
   const count = hexToU256(hex.slice(64, 128));
-  return { totalScore, count };
+  return Number(count);
 }
 
-/** Full ERC-8004 lookup for an address. Returns null if not registered. */
-export async function lookupAddress(address: string): Promise<ERC8004Info | null> {
+/**
+ * Full ERC-8004 lookup for an address.
+ * If knownAgentId is provided (from DB), verify ownership directly.
+ * Otherwise fall back to balanceOf check.
+ */
+export async function lookupAddress(
+  address: string,
+  knownAgentId?: number | null
+): Promise<ERC8004Info | null> {
   try {
-    const agentId = await getAgentIdByAddress(address);
+    let agentId: number | null = null;
+
+    if (knownAgentId != null) {
+      // Fast path: verify the seeded agentId
+      const owns = await verifyOwnership(address, knownAgentId);
+      if (owns) agentId = knownAgentId;
+    } else {
+      // Slow path: just check if registered at all
+      const registered = await hasERC8004(address);
+      if (!registered) return null;
+      // agentId unknown without enumeration — return registered=true with no score
+      return { agent_id: null, reputation_score: null, reputation_count: null };
+    }
+
     if (agentId === null) return null;
 
-    const rep = await getReputationSummary(agentId);
+    const count = await getFeedbackCount(agentId);
     return {
       agent_id: agentId,
-      reputation_score: rep ? Number(rep.totalScore) : null,
-      reputation_count: rep ? Number(rep.count) : null,
+      reputation_score: count ?? null,
+      reputation_count: count ?? null,
     };
   } catch {
     return null;

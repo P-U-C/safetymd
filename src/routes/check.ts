@@ -38,8 +38,8 @@ export async function performCheck(
     // cache miss
   }
 
-  // Parallel fetches
-  const [dbAddr, dbFlags, erc8004Info, blockscoutInfo] = await Promise.all([
+  // Step 1: DB lookups in parallel
+  const [dbAddr, dbFlags] = await Promise.all([
     env.DB.prepare(
       `SELECT a.*, s.name, s.safety_md_url, s.verified
        FROM addresses a
@@ -57,8 +57,11 @@ export async function performCheck(
       .all<FlagRecord>()
       .then((r) => r.results)
       .catch(() => [] as FlagRecord[]),
+  ]);
 
-    chain === 'base' ? lookupAddress(address) : Promise.resolve(null),
+  // Step 2: On-chain + external lookups (pass known agentId from DB if available)
+  const [erc8004Info, blockscoutInfo] = await Promise.all([
+    chain === 'base' ? lookupAddress(address, dbAddr?.erc8004_agent_id ?? null) : Promise.resolve(null),
     chain === 'base' ? getAddressInfo(address) : Promise.resolve(null),
   ]);
 

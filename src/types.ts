@@ -89,7 +89,7 @@ export interface CheckResult {
 }
 
 export interface ERC8004Info {
-  agent_id: number;
+  agent_id: number | null;
   reputation_score: number | null;
   reputation_count: number | null;
 }

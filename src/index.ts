@@ -27,6 +27,7 @@ app.get('/generate', (c) => c.html(GENERATOR_HTML));
 
 // Health check
 app.get('/health', (c) => c.json({ status: 'ok', version: '0.1.0', ts: new Date().toISOString() }));
+app.get('/v1/health', (c) => c.json({ status: 'ok', version: '0.1.0', ts: new Date().toISOString() }));
 
 // API routes
 app.route('/v1/check/batch', batchRouter);

@@ -17,3 +17,7 @@ crons = ["0 2 * * *"]
 
 [vars]
 ENVIRONMENT = "production"
+
+# Note: if ERC-8004 RPC calls fail, set BASE_RPC_URL to an Alchemy/Infura endpoint
+# with a real API key for reliable outbound fetch from Workers
+BASE_RPC_URL = "https://mainnet.base.org"
