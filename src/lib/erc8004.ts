@@ -17,6 +17,7 @@
 import type { ERC8004Info } from '../types';
 
 const BASE_RPCS = [
+  'https://base.llamarpc.com',
   'https://mainnet.base.org',
   'https://base-rpc.publicnode.com',
   'https://1rpc.io/base',
@@ -38,9 +39,8 @@ function hexToU256(hex: string): bigint {
 
 async function ethCall(to: string, data: string): Promise<string | null> {
   for (const rpc of BASE_RPCS) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 3000);
     try {
+      // AbortSignal.timeout() is the correct CF Workers API (no setTimeout needed)
       const resp = await fetch(rpc, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'User-Agent': 'safetymd/0.1' },
@@ -50,7 +50,7 @@ async function ethCall(to: string, data: string): Promise<string | null> {
           method: 'eth_call',
           params: [{ to, data }, 'latest'],
         }),
-        signal: controller.signal,
+        signal: AbortSignal.timeout(5000),
       });
       if (!resp.ok) continue;
       const json = (await resp.json()) as { result?: string; error?: unknown };
@@ -58,8 +58,6 @@ async function ethCall(to: string, data: string): Promise<string | null> {
       return json.result;
     } catch {
       // try next RPC
-    } finally {
-      clearTimeout(timer);
     }
   }
   return null;
