@@ -16,7 +16,8 @@ const app = new Hono<{ Bindings: Env }>();
 app.use('*', cors({
   origin: '*',
   allowMethods: ['GET', 'POST', 'OPTIONS'],
-  allowHeaders: ['Content-Type', 'Authorization'],
+  allowHeaders: ['Content-Type', 'Authorization', 'x-payment', 'X-Payment'],
+  exposeHeaders: ['x-payment-accepted', 'x-free-checks-remaining', 'x-free-tier-limit'],
 }));
 
 // Landing page

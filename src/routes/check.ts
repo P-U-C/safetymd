@@ -3,6 +3,7 @@ import type { Env, AddressRecord, FlagRecord, SignalData, CheckResult } from '..
 import { lookupAddress } from '../lib/erc8004';
 import { getAddressInfo } from '../lib/blockscout';
 import { score } from '../lib/scoring';
+import { checkFreeTier, verifyPayment, buildPaymentRequest, FREE_CHECKS_PER_DAY } from '../lib/mpp';
 
 export const checkRouter = new Hono<{ Bindings: Env }>();
 
@@ -148,9 +149,33 @@ checkRouter.get('/:address', async (c) => {
   }
 
   const ip = c.req.header('CF-Connecting-IP') ?? c.req.header('X-Forwarded-For') ?? 'unknown';
+
+  // Rate limit (hard cap regardless of payment)
   const allowed = await rateLimit(c.env, ip);
   if (!allowed) {
     return c.json({ error: 'Rate limit exceeded. Max 100 requests per hour.' }, 429);
+  }
+
+  // MPP payment gate
+  // Check for x-payment header first (paid path)
+  const xPayment = c.req.header('x-payment') ?? c.req.header('X-Payment');
+  if (xPayment) {
+    const { valid, reason } = await verifyPayment(c.env, xPayment);
+    if (!valid) {
+      return c.json({ error: `Payment verification failed: ${reason}` }, 402);
+    }
+    // Paid — skip free tier, add payment header to response
+    c.header('x-payment-accepted', 'true');
+  } else {
+    // No payment — check free tier
+    const { allowed: freeAllowed, remaining } = await checkFreeTier(c.env, ip);
+    if (!freeAllowed) {
+      // Free tier exhausted — return 402 with payment request
+      c.header('Content-Type', 'application/json');
+      c.header('x-free-tier-limit', String(FREE_CHECKS_PER_DAY));
+      return c.json(buildPaymentRequest(address, chain), 402);
+    }
+    c.header('x-free-checks-remaining', String(remaining));
   }
 
   try {
