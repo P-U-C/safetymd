@@ -1,0 +1,169 @@
+openapi: 3.0.3
+info:
+  title: safety.md
+  version: 0.1.0
+  description: |
+    Payment address trust & safety API for AI agents.
+    
+    First API gated by MPP that protects MPP payments.
+    Free tier: 10 checks/day per IP.
+    Paid: 0.01 USDC per check via x402 (Base or Tempo).
+  contact:
+    url: https://safetymd.p-u-c.workers.dev
+
+servers:
+  - url: https://safetymd.p-u-c.workers.dev
+    description: Production (Cloudflare Workers)
+
+paths:
+  /v1/health:
+    get:
+      summary: Health check
+      operationId: health
+      tags: [System]
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: ok }
+                  version: { type: string, example: 0.1.0 }
+                  ts: { type: string, format: date-time }
+
+  /v1/check/{address}:
+    get:
+      summary: Check payment address safety
+      operationId: checkAddress
+      tags: [Safety]
+      description: |
+        Returns a trust/safety score for an Ethereum address.
+        
+        Free tier: 10 checks/day per IP (x-free-checks-remaining header).
+        Paid: submit x-payment header with base64-encoded MPP receipt.
+        Returns 402 with payment-request body when free tier exhausted.
+      parameters:
+        - name: address
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^0x[0-9a-fA-F]{40}$'
+          example: '0xB1e55EdD3176Ce9C9aF28F15b79e0c0eb8Fe51AA'
+        - name: chain
+          in: query
+          schema:
+            type: string
+            enum: [base, ethereum, polygon]
+            default: base
+        - name: x-payment
+          in: header
+          required: false
+          schema:
+            type: string
+          description: Base64-encoded MPP payment receipt (x402 spec)
+      responses:
+        '200':
+          description: Safety check result
+          headers:
+            x-free-checks-remaining:
+              schema: { type: integer }
+              description: Remaining free checks today
+            x-free-tier-limit:
+              schema: { type: integer, example: 10 }
+            x-payment-accepted:
+              schema: { type: string, example: 'true' }
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SafetyResult'
+        '402':
+          description: Payment required (free tier exhausted)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentRequest'
+        '400':
+          description: Invalid address
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    SafetyResult:
+      type: object
+      required: [address, chain, safe, score, signals, erc8004_registered, checked_at]
+      properties:
+        address:
+          type: string
+          example: '0xB1e55EdD3176Ce9C9aF28F15b79e0c0eb8Fe51AA'
+        chain:
+          type: string
+          example: base
+        safe:
+          type: boolean
+          description: Overall safety verdict
+        score:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          example: 0.87
+          description: Composite trust score (0=unsafe, 1=safe)
+        signals:
+          type: object
+          properties:
+            erc8004_registered:
+              type: boolean
+            contract_verified:
+              type: boolean
+            age_days:
+              type: integer
+            tx_count:
+              type: integer
+            flagged:
+              type: boolean
+        erc8004_registered:
+          type: boolean
+          description: Whether address is registered in ERC-8004 Identity Registry
+        erc8004_agent_id:
+          type: integer
+          nullable: true
+          description: ERC-8004 agent ID if registered
+        payment_accepted:
+          type: boolean
+          description: Whether this check was paid via MPP
+        checked_at:
+          type: string
+          format: date-time
+
+    PaymentRequest:
+      type: object
+      properties:
+        version:
+          type: string
+          example: '1.0'
+        error:
+          type: string
+          example: Payment required
+        accepts:
+          type: array
+          items:
+            type: object
+            properties:
+              scheme: { type: string, example: exact }
+              network: { type: string, example: base }
+              chainId: { type: integer, example: 8453 }
+              maxAmountRequired: { type: string, example: '10000' }
+              payTo: { type: string }
+              asset: { type: string, example: USDC }
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
