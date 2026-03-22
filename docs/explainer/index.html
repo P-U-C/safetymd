@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #0a0a0f;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  width: 1280px; height: 720px;
+  overflow: hidden;
+  color: white;
+}
+#scene { width: 1280px; height: 720px; position: relative; }
+.slide {
+  position: absolute;
+  width: 1280px; height: 720px;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 80px;
+  opacity: 0;
+  transition: opacity 0.7s ease;
+}
+.slide.active { opacity: 1; }
+
+/* Grid bg */
+.grid {
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(0,255,128,0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,128,0.035) 1px, transparent 1px);
+  background-size: 50px 50px;
+  pointer-events: none;
+}
+
+/* Glow */
+.glow-tl {
+  position: absolute; top: -200px; left: -100px;
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(0,255,128,0.07) 0%, transparent 70%);
+  pointer-events: none;
+}
+.glow-br {
+  position: absolute; bottom: -300px; right: -100px;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(100,100,255,0.05) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* Scanlines */
+.scan {
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.025) 2px, rgba(0,0,0,0.025) 4px);
+  pointer-events: none; z-index: 50;
+}
+
+/* Typography */
+.tag {
+  font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: rgba(0,255,128,0.6); margin-bottom: 24px; font-weight: 500;
+}
+h1 { font-size: 80px; font-weight: 700; text-align: center; line-height: 1; letter-spacing: -0.03em; margin-bottom: 16px; font-family: system-ui, sans-serif; }
+h2 { font-size: 56px; font-weight: 700; text-align: center; line-height: 1.1; letter-spacing: -0.02em; margin-bottom: 20px; font-family: system-ui, sans-serif; }
+h3 { font-size: 38px; font-weight: 700; text-align: center; line-height: 1.2; letter-spacing: -0.01em; margin-bottom: 16px; font-family: system-ui, sans-serif; }
+.sub { font-size: 20px; color: rgba(255,255,255,0.45); text-align: center; line-height: 1.6; font-family: system-ui, sans-serif; }
+.green { color: #00ff80; }
+.red { color: #ff5555; }
+.yellow { color: #ffd080; }
+.blue { color: #80b8ff; }
+.purple { color: #c87aff; }
+.dim { color: rgba(255,255,255,0.25); }
+
+/* Terminal */
+.terminal {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  overflow: hidden;
+  width: 100%;
+  max-width: 860px;
+  margin: 24px auto 0;
+}
+.terminal-header {
+  background: rgba(255,255,255,0.04);
+  padding: 12px 18px;
+  display: flex; align-items: center; gap: 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.tdot { width: 12px; height: 12px; border-radius: 50%; }
+.terminal-title { font-size: 11px; color: rgba(255,255,255,0.25); margin-left: 8px; letter-spacing: 0.05em; }
+.terminal-body {
+  padding: 24px 28px;
+  font-size: 14px;
+  line-height: 1.9;
+}
+.t-prompt { color: rgba(0,255,128,0.5); }
+.t-cmd { color: rgba(255,255,255,0.8); }
+.t-key { color: #80b8ff; }
+.t-str { color: #00ff80; }
+.t-bool-t { color: #00ff80; }
+.t-bool-f { color: #ff5555; }
+.t-num { color: #ffd080; }
+.t-dim { color: rgba(255,255,255,0.25); }
+.t-sep { border-top: 1px solid rgba(255,255,255,0.06); margin: 12px 0; }
+.t-http { color: #ffd080; font-size: 12px; }
+.t-comment { color: rgba(255,255,255,0.2); font-size: 12px; }
+
+/* Pills */
+.pills { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; margin-top: 28px; }
+.pill {
+  padding: 8px 18px; border-radius: 5px;
+  font-size: 12px; letter-spacing: 0.07em; font-weight: 500;
+  border: 1px solid; font-family: monospace;
+}
+.pill-g { background: rgba(0,255,128,0.08); border-color: rgba(0,255,128,0.3); color: #00ff80; }
+.pill-b { background: rgba(128,184,255,0.08); border-color: rgba(128,184,255,0.3); color: #80b8ff; }
+.pill-o { background: rgba(255,208,128,0.08); border-color: rgba(255,208,128,0.3); color: #ffd080; }
+.pill-p { background: rgba(200,122,255,0.08); border-color: rgba(200,122,255,0.3); color: #c87aff; }
+
+/* Three-col layout */
+.cols { display: flex; gap: 24px; width: 100%; max-width: 1080px; margin-top: 28px; }
+.col {
+  flex: 1;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  padding: 24px;
+}
+.col-num { font-size: 11px; color: rgba(0,255,128,0.5); letter-spacing: 0.1em; margin-bottom: 8px; font-weight: 600; }
+.col-title { font-size: 17px; font-weight: 700; color: #fff; margin-bottom: 8px; font-family: system-ui, sans-serif; }
+.col-desc { font-size: 13px; color: rgba(255,255,255,0.4); line-height: 1.6; font-family: system-ui, sans-serif; }
+
+/* Two-col split */
+.split { display: flex; gap: 40px; width: 100%; max-width: 1080px; align-items: flex-start; margin-top: 16px; }
+.split-left { flex: 1; }
+.split-right { flex: 1; }
+
+/* Status dot */
+.live-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #00ff80; box-shadow: 0 0 10px #00ff80; margin-right: 8px; vertical-align: middle; animation: blink 2s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+/* Progress bar */
+.progress {
+  position: absolute;
+  bottom: 0; left: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #00ff80, #80b8ff);
+  transition: width 0.1s linear;
+}
+
+/* Slide counter */
+.counter {
+  position: absolute;
+  bottom: 20px; right: 28px;
+  font-size: 11px; color: rgba(255,255,255,0.15);
+  letter-spacing: 0.08em;
+}
+
+/* Scene 1 special */
+.big-title { font-size: 96px; font-family: system-ui, sans-serif; font-weight: 800; }
+.filepath-tag { font-size: 14px; color: rgba(0,255,128,0.4); letter-spacing: 0.08em; margin-bottom: 16px; }
+</style>
+</head>
+<body>
+<div id="scene">
+
+<!-- SLIDE 1: Problem -->
+<div class="slide" id="s1">
+  <div class="grid"></div><div class="glow-tl"></div><div class="glow-br"></div><div class="scan"></div>
+  <div class="tag">The Problem</div>
+  <h1 style="font-family:system-ui,sans-serif;">Agents are paying<br/>each other.</h1>
+  <div class="sub" style="margin-top:20px; max-width:680px;">
+    Autonomously. At scale. Right now.<br/>
+    <span style="color:rgba(255,255,255,0.25)">On Base. On Tempo. No humans in the loop.</span>
+  </div>
+  <div style="margin-top:48px; font-size:22px; color:rgba(255,85,85,0.8); font-family:system-ui,sans-serif; font-weight:600;">
+    But how does an agent know the address is safe?
+  </div>
+  <div style="margin-top:12px; font-size:18px; color:rgba(255,255,255,0.2); font-family:system-ui,sans-serif;">
+    It doesn't. There's no standard. No registry. No signal.
+  </div>
+  <div class="counter">01 / 06</div>
+  <div class="progress" style="width:16%"></div>
+</div>
+
+<!-- SLIDE 2: The Standard -->
+<div class="slide" id="s2">
+  <div class="grid"></div><div class="glow-tl"></div><div class="scan"></div>
+  <div class="tag">The Standard</div>
+  <h2>/.well-known/<span class="green">safety.md</span></h2>
+  <div class="sub" style="margin-bottom:16px;">One file. Any service. Machine-readable. Verifiable.</div>
+  <div class="terminal" style="max-width:780px;">
+    <div class="terminal-header">
+      <div class="tdot" style="background:#ff5f57"></div>
+      <div class="tdot" style="background:#ffbd2e"></div>
+      <div class="tdot" style="background:#28ca41"></div>
+      <div class="terminal-title">oracle.b1e55ed.permanentupperclass.com/.well-known/safety.md</div>
+    </div>
+    <div class="terminal-body">
+      <div class="t-dim">---</div>
+      <div><span class="t-key">version</span><span class="t-dim">: </span><span class="t-str">"1.0"</span></div>
+      <div><span class="t-key">name</span><span class="t-dim">: </span><span class="t-str">"b1e55ed"</span></div>
+      <div><span class="t-key">addresses</span><span class="t-dim">:</span></div>
+      <div>&nbsp;&nbsp;<span class="t-dim">- </span><span class="t-key">address</span><span class="t-dim">: </span><span class="t-str">"0xB1e55EdD3176Ce9C9aF28F15b79e0c0eb8Fe51AA"</span></div>
+      <div>&nbsp;&nbsp;&nbsp;&nbsp;<span class="t-key">chain</span><span class="t-dim">: </span><span class="t-str">"base"</span></div>
+      <div><span class="t-key">identity</span><span class="t-dim">:</span></div>
+      <div>&nbsp;&nbsp;<span class="t-key">erc8004_agent_id</span><span class="t-dim">: </span><span class="t-num">28362</span></div>
+      <div><span class="t-dim">---</span></div>
+    </div>
+  </div>
+  <div class="counter">02 / 06</div>
+  <div class="progress" style="width:33%"></div>
+</div>
+
+<!-- SLIDE 3: The API -->
+<div class="slide" id="s3">
+  <div class="grid"></div><div class="glow-tl"></div><div class="scan"></div>
+  <div class="tag">The API · Live at safetymd.p-u-c.workers.dev</div>
+  <h3><span class="live-dot"></span>Check any address in &lt;200ms</h3>
+  <div class="terminal">
+    <div class="terminal-header">
+      <div class="tdot" style="background:#ff5f57"></div>
+      <div class="tdot" style="background:#ffbd2e"></div>
+      <div class="tdot" style="background:#28ca41"></div>
+      <div class="terminal-title">bash</div>
+    </div>
+    <div class="terminal-body">
+      <div><span class="t-prompt">$ </span><span class="t-cmd">curl safetymd.p-u-c.workers.dev/v1/check/<span class="green">0xB1e5...51AA</span>?chain=base</span></div>
+      <div class="t-sep"></div>
+      <div><span class="t-dim">{</span></div>
+      <div>&nbsp;&nbsp;<span class="t-key">"safe"</span><span class="t-dim">: </span><span class="t-bool-t">true</span><span class="t-dim">,</span></div>
+      <div>&nbsp;&nbsp;<span class="t-key">"risk"</span><span class="t-dim">: </span><span class="t-str">"low"</span><span class="t-dim">,</span></div>
+      <div>&nbsp;&nbsp;<span class="t-key">"safety_md_published"</span><span class="t-dim">: </span><span class="t-bool-t">true</span><span class="t-dim">,</span></div>
+      <div>&nbsp;&nbsp;<span class="t-key">"erc8004_registered"</span><span class="t-dim">: </span><span class="t-bool-t">true</span><span class="t-dim">,</span></div>
+      <div>&nbsp;&nbsp;<span class="t-key">"service"</span><span class="t-dim">: </span><span class="t-str">"b1e55ed"</span></div>
+      <div><span class="t-dim">}</span></div>
+    </div>
+  </div>
+  <div class="pills">
+    <div class="pill pill-g">safety.md ✓</div>
+    <div class="pill pill-b">ERC-8004 ✓</div>
+    <div class="pill pill-o">on-chain history ✓</div>
+    <div class="pill pill-p">flag database ✓</div>
+  </div>
+  <div class="counter">03 / 06</div>
+  <div class="progress" style="width:50%"></div>
+</div>
+
+<!-- SLIDE 4: Payment Gate -->
+<div class="slide" id="s4">
+  <div class="grid"></div><div class="glow-tl"></div><div class="glow-br"></div><div class="scan"></div>
+  <div class="tag">x402 · Machine Payment Protocol</div>
+  <h3>The API that <span class="green">pays for itself</span></h3>
+  <div class="terminal">
+    <div class="terminal-header">
+      <div class="tdot" style="background:#ff5f57"></div>
+      <div class="tdot" style="background:#ffbd2e"></div>
+      <div class="tdot" style="background:#28ca41"></div>
+      <div class="terminal-title">bash</div>
+    </div>
+    <div class="terminal-body">
+      <div class="t-comment"># Free tier exhausted (10/day)</div>
+      <div><span class="t-prompt">$ </span><span class="t-cmd">curl safetymd.p-u-c.workers.dev/v1/check/0x...</span></div>
+      <div><span class="t-http">HTTP 402</span> <span class="t-dim">→ payment required</span></div>
+      <div><span class="t-dim">&nbsp;&nbsp;"network": </span><span class="t-str">"base"</span><span class="t-dim">, "chainId": </span><span class="t-num">8453</span><span class="t-dim">, "asset": </span><span class="t-str">"USDC"</span></div>
+      <div><span class="t-dim">&nbsp;&nbsp;"network": </span><span class="t-str">"tempo"</span><span class="t-dim">, "chainId": </span><span class="t-num">4217</span><span class="t-dim">, "asset": </span><span class="t-str">"USDC"</span></div>
+      <div class="t-sep"></div>
+      <div class="t-comment"># Agent pays 0.01 USDC, retries</div>
+      <div><span class="t-prompt">$ </span><span class="t-cmd">curl ... <span class="yellow">-H "x-payment: &lt;receipt&gt;"</span></span></div>
+      <div><span class="t-http" style="color:#00ff80">HTTP 200</span> <span class="t-dim">→ </span><span class="t-bool-t">"safe": true</span></div>
+    </div>
+  </div>
+  <div style="margin-top:20px; font-size:14px; color:rgba(255,255,255,0.3); font-family:system-ui,sans-serif; text-align:center;">
+    An agent verifying a $500 MPP payment — using MPP to do it.
+  </div>
+  <div class="counter">04 / 06</div>
+  <div class="progress" style="width:67%"></div>
+</div>
+
+<!-- SLIDE 5: Three layers -->
+<div class="slide" id="s5">
+  <div class="grid"></div><div class="glow-tl"></div><div class="scan"></div>
+  <div class="tag">Three Layers · One Standard</div>
+  <div class="cols">
+    <div class="col">
+      <div class="col-num">01 · STANDARD</div>
+      <div class="col-title">safety.md file</div>
+      <div class="col-desc">Services publish /.well-known/safety.md. Open spec. Crawled daily. Zero friction to adopt.</div>
+    </div>
+    <div class="col">
+      <div class="col-num">02 · API</div>
+      <div class="col-title">Live check endpoint</div>
+      <div class="col-desc">GET /v1/check/:address. ERC-8004 + domain match + flags + Blockscout. &lt;200ms.</div>
+    </div>
+    <div class="col">
+      <div class="col-num">03 · PAYMENT</div>
+      <div class="col-title">x402 gate</div>
+      <div class="col-desc">10 free/day. 0.01 USDC after. Base or Tempo. First service gated by MPP that protects MPP.</div>
+    </div>
+  </div>
+  <div class="pills" style="margin-top:32px;">
+    <div class="pill pill-b">MCP Server included</div>
+    <div class="pill pill-g">ERC-8004 native</div>
+    <div class="pill pill-o">Base · Tempo</div>
+    <div class="pill pill-p">Open source · MIT</div>
+  </div>
+  <div class="counter">05 / 06</div>
+  <div class="progress" style="width:84%"></div>
+</div>
+
+<!-- SLIDE 6: Close -->
+<div class="slide" id="s6">
+  <div class="grid"></div><div class="glow-tl"></div><div class="glow-br"></div><div class="scan"></div>
+  <div class="filepath-tag">/.well-known/</div>
+  <div class="big-title">safety<span class="green">.md</span></div>
+  <div class="sub" style="margin-top:16px; font-size:22px;">Check before you pay.</div>
+  <div style="margin-top:40px; display:flex; gap:40px; font-size:13px; color:rgba(255,255,255,0.25); font-family:system-ui,sans-serif; text-align:center;">
+    <div>
+      <div style="color:rgba(0,255,128,0.6); margin-bottom:4px; letter-spacing:0.06em; font-size:11px; font-family:monospace;">API</div>
+      safetymd.p-u-c.workers.dev
+    </div>
+    <div style="color:rgba(255,255,255,0.1); font-size:20px; align-self:center;">·</div>
+    <div>
+      <div style="color:rgba(0,255,128,0.6); margin-bottom:4px; letter-spacing:0.06em; font-size:11px; font-family:monospace;">DOCS</div>
+      p-u-c.github.io/safetymd
+    </div>
+    <div style="color:rgba(255,255,255,0.1); font-size:20px; align-self:center;">·</div>
+    <div>
+      <div style="color:rgba(0,255,128,0.6); margin-bottom:4px; letter-spacing:0.06em; font-size:11px; font-family:monospace;">CODE</div>
+      github.com/P-U-C/safetymd
+    </div>
+  </div>
+  <div class="counter">06 / 06</div>
+  <div class="progress" style="width:100%"></div>
+</div>
+
+</div><!-- /scene -->
+
+<script>
+const slides = ['s1','s2','s3','s4','s5','s6'];
+let current = 0;
+
+function show(idx) {
+  slides.forEach((id, i) => {
+    const el = document.getElementById(id);
+    el.classList.toggle('active', i === idx);
+  });
+}
+
+show(0);
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') {
+    current = Math.min(current + 1, slides.length - 1);
+    show(current);
+  } else if (e.key === 'ArrowLeft') {
+    current = Math.max(current - 1, 0);
+    show(current);
+  }
+});
+
+// Auto-advance for recording: 8s per slide
+let auto = true;
+if (auto) {
+  setInterval(() => {
+    current = (current + 1) % slides.length;
+    show(current);
+  }, 8000);
+}
+</script>
+</body>
+</html>
