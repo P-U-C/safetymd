@@ -25,9 +25,13 @@ export const FREE_CHECKS_PER_DAY = 10;
 export const PRICE_USDC = '0.01'; // per check
 export const PRICE_WEI = '10000'; // 0.01 USDC in 6-decimal wei
 
-// Tempo mainnet details
-const TEMPO_CHAIN_ID = 4217;
-const TEMPO_RPC = 'https://rpc.tempo.xyz';
+// Supported chains for payment settlement
+const SUPPORTED_CHAINS = [
+  { name: 'base',  chainId: 8453,  rpc: 'https://base-rpc.publicnode.com', network: 'base' },
+  { name: 'tempo', chainId: 4217,  rpc: 'https://rpc.tempo.xyz',           network: 'tempo' },
+] as const;
+
+const TEMPO_RPC = 'https://rpc.tempo.xyz'; // kept for on-chain verify compat
 
 // Our payment receiving address (same deployer wallet)
 const PAYMENT_ADDRESS = '0xB1e55EdD3176Ce9C9aF28F15b79e0c0eb8Fe51AA';
@@ -41,28 +45,28 @@ const SERVICE_DESCRIPTION = 'ERC-8004 agent address safety check';
  * Returns the full 402 payload agents should parse.
  */
 export function buildPaymentRequest(address: string, chain: string): object {
+  const resource = `https://safetymd.p-u-c.workers.dev/v1/check/${address}?chain=${chain}`;
   return {
     version: '1.0',
     error: 'Payment required',
-    accepts: [
-      {
-        scheme: 'mpp',
-        network: 'tempo',
-        chainId: TEMPO_CHAIN_ID,
-        maxAmountRequired: PRICE_WEI,
-        resource: `https://safetymd.p-u-c.workers.dev/v1/check/${address}?chain=${chain}`,
-        description: `${SERVICE_DESCRIPTION} for ${address} on ${chain}`,
-        mimeType: 'application/json',
-        payTo: PAYMENT_ADDRESS,
-        maxTimeoutSeconds: 60,
-        asset: 'USDC',
-        outputSchema: null,
-        extra: {
-          name: SERVICE_NAME,
-          version: '0.1.0',
-        },
+    accepts: SUPPORTED_CHAINS.map((c) => ({
+      scheme: 'exact',
+      network: c.network,
+      chainId: c.chainId,
+      maxAmountRequired: PRICE_WEI,
+      resource,
+      description: `${SERVICE_DESCRIPTION} for ${address} on ${chain}`,
+      mimeType: 'application/json',
+      payTo: PAYMENT_ADDRESS,
+      maxTimeoutSeconds: 60,
+      asset: 'USDC',
+      outputSchema: null,
+      extra: {
+        name: SERVICE_NAME,
+        version: '0.1.0',
+        supportedChains: SUPPORTED_CHAINS.map((x) => ({ chainId: x.chainId, network: x.network })),
       },
-    ],
+    })),
   };
 }
 
@@ -150,14 +154,18 @@ export async function verifyPayment(
     // Mark receipt as used (24h TTL — enough to prevent replay)
     await env.KV.put(usedKey, '1', { expirationTtl: 86400 }).catch(() => null);
 
-    // Optional: on-chain verification via Tempo RPC
-    // Attempt but fail open if RPC unreachable
+    // Optional: on-chain verification (try each supported chain, fail open if all unreachable)
     try {
-      const onChain = await verifyOnChain(receipt.txHash, receipt.to, receipt.amount);
-      if (onChain === false) {
+      let verified: boolean | null = null;
+      for (const c of SUPPORTED_CHAINS) {
+        const result = await verifyOnChain(receipt.txHash, receipt.to, c.rpc);
+        if (result === true) { verified = true; break; }
+        if (result === false) { verified = false; break; }
+        // null = unreachable, try next
+      }
+      if (verified === false) {
         return { valid: false, reason: 'on-chain verification failed' };
       }
-      // onChain === null means RPC unreachable → fail open
     } catch {
       // RPC error → fail open
     }
@@ -175,12 +183,12 @@ export async function verifyPayment(
 async function verifyOnChain(
   txHash: string,
   expectedTo: string,
-  expectedAmount?: string
+  rpc: string,
 ): Promise<boolean | null> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 3000);
   try {
-    const resp = await fetch(TEMPO_RPC, {
+    const resp = await fetch(rpc, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'User-Agent': 'safetymd/0.1' },
       body: JSON.stringify({
